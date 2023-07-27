@@ -1,5 +1,5 @@
 *.txt
 *.url
-/data/*
-/links/*
+data/*
+links/*
 /dev
