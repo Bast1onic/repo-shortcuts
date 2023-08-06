@@ -62,16 +62,14 @@ if(choice == 'y'):
     while(len(unexplored)>0):
         curdir = unexplored.pop()
         os.chdir(curdir)
+        
         for item in os.listdir():
             if(os.path.isdir(item)):
-                unexplored.append(item)
+                unexplored.append(os.path.abspath(item))
             elif(os.path.splitext(item)[-1]=='.url'):
                 with open(item, 'r') as sc:
                     url = sc.readlines()[1][23:]
-                    print(url)
                 if(url in deadurls):
                     os.remove(item)
                     print(f"Removed {item}")
-
-
 
