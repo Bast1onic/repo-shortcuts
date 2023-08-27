@@ -27,7 +27,7 @@ urls = set(re.findall(': "([^"]*)",', repoLines))
 
 # open storage file
 # compare against fetched result to determine new links and dead links
-with open('./data/links.txt', 'r+') as links:
+with open('./data/links.txt', 'w+') as links:
     storedLinks = {line.strip() for line in links.readlines()}
     newurls = urls - storedLinks
     deadurls = storedLinks - urls
