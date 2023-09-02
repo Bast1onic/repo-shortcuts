@@ -1,7 +1,6 @@
 import sys
-import subprocess
-import re
 import os
+import requests
 
 # get API token
 try:
@@ -13,29 +12,37 @@ except(FileNotFoundError):
     exit(0)
 
 # get repos from API
-fetchCmd = f'curl -s -L \
-  -H "Accept: application/vnd.github+json" \
-  -H "Authorization: Bearer {token}" \
-  -H "X-GitHub-Api-Version: 2022-11-28" \
-  -H "affiliation: owner" \
-  https://api.github.com/user/repos'
+url = 'https://api.github.com/user/repos'
+headers = {'accept': 'application/vnd.github+json',
+           'authorization': f'bearer {token}',
+           'x-github-api-version': '2022-11-28',
+           'affiliation': 'owner'}
 
-repoLines = subprocess.check_output(["grep", "full_name"], input = subprocess.check_output(fetchCmd)).decode()
+r = requests.get(url, headers=headers)
+if(r.status_code != 200):
+    if(r.json()['message'] != None and r.json()['message'] == 'Bad credentials'):
+        print('Error: invalid token')
+    else:
+        print("Error: Could not access GitHub API")
+    exit(0)
 
 # parse response
-urls = set(re.findall(': "([^"]*)",', repoLines))
-
+urls = {repo['full_name'] for repo in r.json()}
 # open storage file
-# compare against fetched result to determine new links and dead links
-with open('./data/links.txt', 'w+') as links:
+try:
+    links = open('./data/links.txt', 'r+')
+    # compare against fetched result to determine new links and dead links
     storedLinks = {line.strip() for line in links.readlines()}
     newurls = urls - storedLinks
     deadurls = storedLinks - urls
-
-    # overwrite with fetched results
     links.truncate(0)
     links.seek(0)
+except(FileNotFoundError):
+    links = open('./data/links.txt', 'w')
+finally:
+    # overwrite with fetched results
     links.write('\n'.join(urls))
+    links.close()
 
 # create only new shortcuts
 for url in newurls:
